@@ -90,6 +90,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>ecom-demo</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

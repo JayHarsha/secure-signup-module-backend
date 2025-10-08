@@ -4,11 +4,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -18,28 +22,40 @@ import java.util.Base64;
 @Component
 public class AESGCMUtil {
 
-    private final String masterKey;
+    private static String masterKey;
 
-    public AESGCMUtil(@Value("${aesgcm.masterkey.base64}") String masterKey) {
-        this.masterKey = masterKey;
+//    public AESGCMUtil(@Value("${aesgcm.masterkey.base64}") String masterKey) {
+//        this.masterKey = masterKey;
+//    }
+    public AESGCMUtil(@Value("${aesgcm.masterkey.base64:}") String masterKeyProp) throws IOException {
+        String envFilePath = System.getenv("AESGCM_MASTERKEY_FILE");
+        if (masterKeyProp != null && !masterKeyProp.isBlank()) {
+            this.masterKey = masterKeyProp;
+        } else if (envFilePath != null) {
+            this.masterKey = Files.readString(Path.of(envFilePath)).trim();
+        } else {
+            throw new IllegalStateException("Master key not provided via property or Docker Secret.");
+        }
     }
+//    this.masterKey = "4OJczRwt3b++cRMWzfq8aIXzkyG9j4YmbKgq6E5fGUs=";
 
     private static final int AES_KEY_SIZE = 256; // bits
     private static final int GCM_IV_LENGTH = 12; // bytes
     private static final int GCM_TAG_LENGTH = 128; // bits
 
-    private SecretKey getKeyFromBase64() {
+
+    private static SecretKey getKeyFromBase64() {
         byte[] decoded = Base64.getDecoder().decode(masterKey);
         return new SecretKeySpec(decoded, 0, decoded.length, "AES");
     }
 
-//    // Generate a random AES-256 key
-//    public static String generateKey() throws Exception {
-//        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-//        keyGen.init(AES_KEY_SIZE);
-//        SecretKey key = keyGen.generateKey();
-//        return Base64.getEncoder().encodeToString(key.getEncoded());
-//    }
+    // Generate a random AES-256 key
+    public static String generateKey() throws Exception {
+        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(AES_KEY_SIZE);
+        SecretKey key = keyGen.generateKey();
+        return Base64.getEncoder().encodeToString(key.getEncoded());
+    }
 
     /**
      * Encrypt the provided String
@@ -47,7 +63,7 @@ public class AESGCMUtil {
      * @return
      * @throws Exception
      */
-    public String encrypt(String plainText) throws Exception {
+    public static String encrypt(String plainText) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         byte[] iv = new byte[GCM_IV_LENGTH];
         new SecureRandom().nextBytes(iv);
@@ -68,7 +84,7 @@ public class AESGCMUtil {
      * @return
      * @throws Exception
      */
-    public String decrypt(String encryptedBase64) throws Exception {
+    public static String decrypt(String encryptedBase64) throws Exception {
         byte[] decoded = Base64.getDecoder().decode(encryptedBase64);
         ByteBuffer byteBuffer = ByteBuffer.wrap(decoded);
 
@@ -84,5 +100,6 @@ public class AESGCMUtil {
 
         return new String(plainText, StandardCharsets.UTF_8);
     }
+
 }
 
