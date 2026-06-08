@@ -5,7 +5,7 @@
 ---
 
 ### 🔗 Related Repositories
-* **Backend API (This Repo):** [https://github.com/JayHarsha/ECOM-SignupModule](https://github.com/JayHarsha/ECOM-SignupModule)
+* **Backend API (This Repo):** [https://github.com/JayHarsha/secure-signup-module-backend](https://github.com/JayHarsha/secure-signup-module-backend)
 * **Frontend UI Client:** [https://github.com/JayHarsha/secure-signup-module-frontend](https://github.com/JayHarsha/secure-signup-module-frontend)
 
 ---
